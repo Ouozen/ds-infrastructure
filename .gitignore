@@ -1,3 +1,6 @@
 postgres_data/
 dags/
+config/
+plugins/
+logs/
 .env
