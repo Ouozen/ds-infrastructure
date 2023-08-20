@@ -81,6 +81,13 @@ services:
       - ${JUPYTER_VOLUME_FOR_DOCS}:/home/jovyan
       - ${AIRFLOW_PROJ_DIR:-.}/dags:/home/jovyan/dags
 
+  mlflow:
+    build: mlflow/
+    container_name: mlflow
+    ports:
+      - 8196:5000
+    command: mlflow server --host 0.0.0.0
+
   airflow-webserver:
     <<: *airflow-common
     container_name: airflow_webserver
