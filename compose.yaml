@@ -85,7 +85,7 @@ services:
     build: mlflow/
     container_name: mlflow
     ports:
-      - 8196:5000
+      - ${MLFLOW_PORT}:5000
     command: mlflow server --host 0.0.0.0
 
   airflow-webserver:
