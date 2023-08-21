@@ -89,6 +89,20 @@ services:
       - ${MLFLOW_PORT}:5000
     command: mlflow server --host 0.0.0.0
 
+  storage_s3:
+    image: minio/minio:latest
+    container_name: storage_s3_minio
+    command: server --console-address ":9001" /data/
+    ports:
+      - 8198:9000
+      - 8199:9001
+    environment:
+      MINIO_ROOT_USER: ivan
+      MINIO_ROOT_PASSWORD: R1b2n89769136r
+    volumes:
+      - ./s3_data:/data
+      - ./s3_data/config_minio:/root/.minio
+
   airflow-webserver:
     <<: *airflow-common
     container_name: airflow_webserver
