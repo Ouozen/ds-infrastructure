@@ -43,14 +43,15 @@ services:
     image: postgres:${POSTGRES_VERSION}
     container_name: postgres
     environment:
-      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_USER: ivan
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
-      POSTGRES_MULTIPLE_DATABASES: ${AIRFLOW_DB}, ${POSTGRES_DATA_DB}
+      #POSTGRES_DB: airflow
+      POSTGRES_MULTIPLE_DATABASES: airflow,mlflow
     volumes:
       - ./create_multiple_postgres_db.sh:/docker-entrypoint-initdb.d/create_multiple_postgres_db.sh
-      - ${POSTGRES_VOLUME_FOR_DB}:/var/lib/postgresql/data
+      - /home/ivan/gitrepos/ds_infrastructure/postgres_data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD", "pg_isready", "-U", "ivan"]
+      test: ["CMD", "pg_isready", "-U", "airflow"]
       interval: 10s
       retries: 5
       start_period: 5s
