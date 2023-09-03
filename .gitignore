@@ -3,4 +3,5 @@ dags/
 config/
 logs/
 plugins/
+s3_data/
 .env

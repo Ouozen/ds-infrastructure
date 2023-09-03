@@ -1,2 +1,2 @@
 FROM python:3.11.4-slim
-RUN pip install mlflow boto3 psycopg
+RUN pip install mlflow boto3 psycopg2-binary

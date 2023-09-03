@@ -7,10 +7,10 @@ x-airflow-common:
   environment:
     &airflow-common-env
     AIRFLOW__CORE__EXECUTOR: ${EXECUTOR}
-    AIRFLOW__DATABASE__SQL_ALCHEMY_CONN: postgresql+psycopg2://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres/${AIRFLOW_DB}
+    AIRFLOW__DATABASE__SQL_ALCHEMY_CONN: postgresql+psycopg2://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres_backend/${AIRFLOW_DB}
     # For backward compatibility, with Airflow <2.3
-    AIRFLOW__CORE__SQL_ALCHEMY_CONN: postgresql+psycopg2://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres/${AIRFLOW_DB}
-    AIRFLOW__CELERY__RESULT_BACKEND: db+postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres/${AIRFLOW_DB}
+    AIRFLOW__CORE__SQL_ALCHEMY_CONN: postgresql+psycopg2://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres_backend/${AIRFLOW_DB}
+    AIRFLOW__CELERY__RESULT_BACKEND: db+postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres_backend/${AIRFLOW_DB}
     AIRFLOW__CELERY__BROKER_URL: redis://:@redis:${REDIS_EXPOSE}/0
     AIRFLOW__CORE__FERNET_KEY: ''
     AIRFLOW__CORE__DAGS_ARE_PAUSED_AT_CREATION: '${DAGS_ARE_PAUSED_AT_CREATION}'
@@ -35,18 +35,17 @@ x-airflow-common:
     &airflow-common-depends-on
     redis:
       condition: service_healthy
-    postgres:
+    postgres_backend:
       condition: service_healthy
 
 services:
-  postgres:
+  postgres_backend:
     image: postgres:${POSTGRES_VERSION}
-    container_name: postgres
+    container_name: postgres_backend
     environment:
-      POSTGRES_USER: ivan
+      POSTGRES_USER: ${POSTGRES_USER}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
-      #POSTGRES_DB: airflow
-      POSTGRES_MULTIPLE_DATABASES: airflow,mlflow
+      POSTGRES_MULTIPLE_DATABASES: ${AIRFLOW_DB},${MLFLOW_DB}
     volumes:
       - ./create_multiple_postgres_db.sh:/docker-entrypoint-initdb.d/create_multiple_postgres_db.sh
       - /home/ivan/gitrepos/ds_infrastructure/postgres_data:/var/lib/postgresql/data
@@ -82,31 +81,51 @@ services:
       - ${JUPYTER_VOLUME_FOR_DOCS}:/home/jovyan
       - ${AIRFLOW_PROJ_DIR:-.}/dags:/home/jovyan/dags
 
-  mlflow:
-    build: mlflow/
-    container_name: mlflow
-    ports:
-      - ${MLFLOW_PORT}:5000
-    command: mlflow server --host 0.0.0.0
-
   storage_s3:
-    image: minio/minio:latest
+    image: minio/minio:${MINIO_VERSION}
     container_name: storage_s3_minio
     command: server --console-address ":9001" /data/
     ports:
-      - ${S3_PORT_1}:9000
-      - ${S3_PORT_2}:9001
+      - ${S3_PORT_DATA}:9000
+      - ${S3_PORT_WEB}:9001
     environment:
       MINIO_ROOT_USER: ${MINIO_ROOT_USER}
       MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD}
     volumes:
       - ${MINIO_VOLUME_DATA}:/data
-      - ${MINIO_VOLUME_CONFIG}:/root/.minio
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
       interval: 30s
       timeout: 20s
       retries: 3
+
+  createbucket:
+    image: minio/mc:${MINIO_MC_VERSION}
+    depends_on:
+      - storage_s3
+    entrypoint: >
+      /bin/sh -c "
+      /usr/bin/mc alias set minio http://storage_s3:9000 ${MINIO_ROOT_USER} ${MINIO_ROOT_PASSWORD};
+      /usr/bin/mc mb minio/${MINIO_BUCKET_NAME};
+      /usr/bin/mc policy set public minio/${MINIO_BUCKET_NAME};
+      exit 0;
+      "
+
+  mlflow:
+    build: mlflow/
+    container_name: mlflow
+    ports:
+      - ${MLFLOW_PORT}:5000
+    environment:
+      MLFLOW_S3_ENDPOINT_URL: http://storage_s3:9000
+      AWS_ACCESS_KEY_ID: ${MINIO_ROOT_USER}
+      AWS_SECRET_ACCESS_KEY: ${MINIO_ROOT_PASSWORD}
+    command: mlflow server --backend-store-uri postgresql+psycopg2://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres_backend/${MLFLOW_DB} --default-artifact-root s3://${MINIO_BUCKET_NAME}/ --artifacts-destination s3://${MINIO_BUCKET_NAME}/ --host 0.0.0.0
+    depends_on:
+      storage_s3:
+        condition: service_healthy
+      postgres_backend:
+        condition: service_healthy
 
   airflow-webserver:
     <<: *airflow-common
