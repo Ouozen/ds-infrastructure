@@ -1,6 +1,7 @@
 postgres_data/
 dags/
 config/
-plugins/
 logs/
+plugins/
+s3_data/
 .env
