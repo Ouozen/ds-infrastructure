@@ -39,6 +39,16 @@ x-airflow-common:
       condition: service_healthy
 
 services:
+  portainer:
+    image: portainer/portainer:latest
+    container_name: portainer
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - /opt/portainer:/data
+    ports:
+      - 8156:9000
+    restart: always
+
   postgres_backend:
     image: postgres:${POSTGRES_VERSION}
     container_name: postgres_backend
