@@ -80,6 +80,7 @@ services:
     volumes:
       - ${JUPYTER_VOLUME_FOR_DOCS}:/home/jovyan
       - ${AIRFLOW_PROJ_DIR:-.}/dags:/home/jovyan/dags
+      - ./credentials.yaml:/home/jovyan/credentials.yaml
 
   storage_s3:
     image: minio/minio:${MINIO_VERSION}

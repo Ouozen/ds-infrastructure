@@ -7,4 +7,5 @@ s3_data/
 superset/
 clickhouse_data/
 mlflow/minio_config/
+credentials.yaml
 .env
