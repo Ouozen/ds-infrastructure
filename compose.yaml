@@ -127,6 +127,47 @@ services:
       postgres_backend:
         condition: service_healthy
 
+  postgres_prod:
+    image: postgres:${POSTGRES_VERSION}
+    container_name: postgres_prod
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_USER}
+    volumes:
+      - /home/ivan/gitrepos/ds_infrastructure/postgres_prod:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD", "pg_isready", "-U", "airflow"]
+      interval: 10s
+      retries: 5
+      start_period: 5s
+    restart: always
+    networks:
+      - databases
+    ports:
+      - ${POSTGRES_PROD_PORT}:5432
+
+  clickhouse:
+    image: clickhouse/clickhouse-server:${CLICKHOUSE_VERSION}
+    container_name: clickhouse
+    environment:
+      CLICKHOUSE_USER: ${CLICKHOUSE_USER}
+      CLICKHOUSE_PASSWORD: ${CLICKHOUSE_PASSWORD}
+    volumes:
+      - ${CLICKHOUSE_VOLUME_FOR_DB}:/var/lib/clickhouse/
+      - ./create_database_clickhouse.sh:/docker-entrypoint-initdb.d/create_database_clickhouse.sh
+    healthcheck:
+      test: wget --no-verbose --tries=1 --spider http://localhost:8123/?query=SELECT%201 || exit 1
+      interval: 30s
+      retries: 5
+      start_period: 15s
+    restart: always
+    networks:
+      - databases
+    ports:
+      - ${CLICKHOUSE_PORT_1}:8123
+      - ${CLICKHOUSE_PORT_2}:9000
+
   airflow-webserver:
     <<: *airflow-common
     container_name: airflow_webserver
@@ -314,6 +355,6 @@ services:
         condition: service_completed_successfully
 
 networks:
-  docker_dmls:
+  databases:
     ipam:
       driver: default
