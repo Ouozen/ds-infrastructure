@@ -4,4 +4,6 @@ config/
 logs/
 plugins/
 s3_data/
+superset/
+mlflow/minio_config/
 .env
