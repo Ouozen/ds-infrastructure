@@ -2,6 +2,6 @@
 
 mkdir -p dags logs plugins config
 
-python3 render_credentials.py
+python3 credentials_render.py
 
 docker compose up airflow-init
