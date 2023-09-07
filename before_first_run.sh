@@ -1,6 +1,6 @@
 #!/bin/bash
 
-mkdir -p dags logs plugins config postgres_data postgres_prod clickhouse_data s3_data
+mkdir -p dags logs plugins config
 
 python3 render_credentials.py
 

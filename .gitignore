@@ -1,11 +1,8 @@
-postgres_data/
 dags/
 config/
 logs/
 plugins/
-s3_data/
-superset/
-clickhouse_data/
-mlflow/minio_config/
 credentials.yaml
-.env
+clickhouse_data/
+s3_data/
+old_compose.yaml

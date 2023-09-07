@@ -92,6 +92,25 @@ services:
       - ${AIRFLOW_PROJ_DIR:-.}/dags:/home/jovyan/dags
       - ./credentials.yaml:/home/jovyan/credentials.yaml
 
+  jupyter_gpu:
+    image: gpu-jupyter:latest
+    container_name: jupyter_gpu
+    ports:
+      - 8140:8888
+    environment:
+      JUPYTER_ENABLE_LAB: "${JUPYTER_ENABLE_LAB}"
+      JUPYTER_TOKEN: "${JUPYTER_TOKEN}"
+    volumes:
+      - ${JUPYTER_VOLUME_FOR_DOCS}:/home/jovyan
+      - ./credentials.yaml:/home/jovyan/credentials.yaml
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [gpu]
+
   storage_s3:
     image: minio/minio:${MINIO_VERSION}
     container_name: storage_s3_minio
