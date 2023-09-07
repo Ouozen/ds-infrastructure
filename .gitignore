@@ -6,3 +6,4 @@ credentials.yaml
 clickhouse_data/
 s3_data/
 old_compose.yaml
+.env

@@ -14,6 +14,12 @@ clickhouse_user = os.getenv('CLICKHOUSE_USER')
 clickhouse_password = os.getenv('CLICKHOUSE_PASSWORD')
 clickhouse_port = os.getenv('CLICKHOUSE_PORT_1')
 
+minio_user = os.getenv('MINIO_ROOT_USER')
+minio_password = os.getenv('MINIO_ROOT_PASSWORD')
+
+airflow_user = os.getenv('AIRFLOW_USER')
+airflow_password = os.getenv('AIRFLOW_PASSWORD')
+
 # Define the template directory and file
 template_dir = os.path.dirname(os.path.abspath(__file__))
 template_file = 'credentials_render.yaml'
@@ -30,7 +36,11 @@ rendered_yaml = template.render(POSTGRES_USER=postgres_user,
 				POSTGRES_PROD_PORT=postgres_port,
 				CLICKHOUSE_USER=clickhouse_user,
 				CLICKHOUSE_PASSWORD=clickhouse_password,
-				CLICKHOUSE_PORT_1=clickhouse_port)
+				CLICKHOUSE_PORT_1=clickhouse_port,
+				MINIO_ROOT_USER=minio_user,
+				MINIO_ROOT_PASSWORD=minio_password,
+				AIRFLOW_USER=airflow_user,
+				AIRFLOW_PASSWORD=airflow_password)
 
 # Save the rendered YAML to a new file
 with open('credentials.yaml', 'w') as output_file:
